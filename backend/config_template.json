@@ -1,0 +1,59 @@
+{
+  "description": "Template de configuração para Mangaba AI",
+  "required": {
+    "GOOGLE_API_KEY": {
+      "description": "Chave da API do Google Generative AI",
+      "type": "string",
+      "example": "AIza...",
+      "required": true
+    }
+  },
+  "optional": {
+    "MODEL_NAME": {
+      "description": "Nome do modelo a ser usado",
+      "type": "string",
+      "default": "gemini-pro",
+      "options": [
+        "gemini-pro",
+        "gemini-pro-vision"
+      ]
+    },
+    "MODEL_TEMPERATURE": {
+      "description": "Temperatura do modelo (criatividade)",
+      "type": "float",
+      "default": 0.7,
+      "range": [
+        0.0,
+        2.0
+      ]
+    },
+    "AGENT_NAME": {
+      "description": "Nome do agente",
+      "type": "string",
+      "default": "MangabaAgent"
+    },
+    "LOG_LEVEL": {
+      "description": "Nível de logging",
+      "type": "string",
+      "default": "INFO",
+      "options": [
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL"
+      ]
+    },
+    "ENVIRONMENT": {
+      "description": "Ambiente de execução",
+      "type": "string",
+      "default": "development",
+      "options": [
+        "development",
+        "testing",
+        "staging",
+        "production"
+      ]
+    }
+  }
+}
