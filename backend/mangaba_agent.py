@@ -279,7 +279,7 @@ class MangabaAgent(A2AAgent):
                     "tags": tags,
                     "sender_info": {
                         "agent_id": self.agent_id,
-                        "timestamp": MCPContext.create.__defaults__[0]
+                        "timestamp": datetime.now().isoformat()
                     }
                 }
             )
@@ -297,16 +297,6 @@ class MangabaAgent(A2AAgent):
         """Chat com contexto específico."""
         full_prompt = f"Contexto: {context}\n\nUsuário: {message}"
         return self.chat(full_prompt)
-    
-    def analyze_text(self, text: str, instruction: str = "Analise este texto") -> str:
-        """Analisa um texto com instrução específica."""
-        prompt = f"{instruction}:\n\n{text}"
-        return self.chat(prompt)
-    
-    def translate(self, text: str, target_language: str = "português") -> str:
-        """Traduz texto para idioma especificado."""
-        prompt = f"Traduza o seguinte texto para {target_language}:\n\n{text}"
-        return self.chat(prompt)
     
     def summarize(self, text: str, max_sentences: int = 3) -> str:
         """Resume texto em número específico de frases."""

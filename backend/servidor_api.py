@@ -1,10 +1,9 @@
-# servidor_api.py
-
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# A importação continua a mesma
+# Importa o agente da Mangaba.ai
 from mangaba_agent import MangabaAgent
 
 # Carrega as variáveis do .env (GOOGLE_API_KEY e MODEL_NAME)
@@ -12,48 +11,57 @@ load_dotenv()
 
 # --- Bloco de Inicialização ---
 app = FastAPI()
+
+# Adiciona CORS para permitir que o front-end em React acesse a API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Em produção, substitua pelo domínio do seu front
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 agent = MangabaAgent()
 print("✅ Servidor de API iniciado com o Agente Mangaba.ai pronto para uso!")
 # --- Fim do Bloco de Inicialização ---
 
 
-# O nosso modelo de requisição já é perfeito para isso, não precisa mudar.
+# Modelo de requisição esperado pelo endpoint
 class PlanilhaRequest(BaseModel):
     dados_planilha: str
     instrucao: str
 
 
-# O endpoint que o seu frontend vai chamar
+# Endpoint que o frontend vai chamar para análise
 @app.post("/analisar_planilha")
 def analisar_planilha(request: PlanilhaRequest):
-    print(f"Recebida requisição para analisar planilha com a instrução: '{request.instrucao}'")
-    
-    # --- LÓGICA DE PROMPT APRIMORADA (Inspirada no Exemplo) ---
-    # Aqui montamos uma instrução completa e detalhada para a IA
-    prompt_completo = f"""
-    **Tarefa:** Você é um especialista em análise de dados e planilhas.
-    
-    **Instrução do Usuário:** {request.instrucao}
-    
-    **Dados da Planilha (em formato de texto/CSV):**
-    ---
-    {request.dados_planilha}
-    ---
-    
-    **Sua Resposta:** Forneça uma análise clara e objetiva baseada na instrução e nos dados fornecidos.
-    """
-    # --- FIM DA LÓGICA DE PROMPT ---
-    
+    print(f"📩 Recebida requisição para analisar planilha com a instrução: '{request.instrucao}'")
+
+    # Cria o prompt que será enviado ao agente
+    prompt_completo = (
+        f"Você é um assistente especializado em análise de planilhas."
+        f" O usuário enviou os seguintes dados extraídos de uma planilha:\n\n"
+        f"{request.dados_planilha}\n\n"
+        f"Instrução do usuário: {request.instrucao}"
+    )
+
+    # Faz a chamada ao agente da Mangaba.ai
     try:
-        # Usamos o método .chat() que é o mais poderoso, como vimos no exemplo
-        analise = agent.chat(prompt_completo)
-        
-        print("Análise gerada pelo agente com sucesso.")
-        return {"analise_concluida": True, "relatorio": analise}
+        resposta = agent.chat(prompt_completo)
+        print("✅ Análise concluída com sucesso!")
+        return {"analise_concluida": True, "relatorio": resposta}
     except Exception as e:
-        print(f"❌ Erro durante a análise do agente: {e}")
+        print(f"❌ Erro ao processar a análise: {e}")
         return {"analise_concluida": False, "erro": str(e)}
 
+
+# Endpoint de teste para saber se a API está no ar
 @app.get("/")
-def rota_raiz():
-    return {"mensagem": "Servidor do Agente de Análise de Planilhas está no ar!"}
+def health():
+    return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=5000)
+
