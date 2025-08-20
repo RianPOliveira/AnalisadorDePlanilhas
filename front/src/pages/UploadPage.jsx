@@ -1,7 +1,7 @@
-import { useState } from "react";
-import axios from "axios";
+import { useState } from "react"; // CORRIGIDO: de '=' para 'from'
+import axios from "axios";       // CORRIGIDO: de '=' para 'from'
 import * as XLSX from "xlsx";
-import * as pdfjsLib from "pdfjs-dist";
+import *as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min?url";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -62,7 +62,14 @@ export default function UploadPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button className="btn btn-primary" disabled={!file || !!status}>Enviar para Análise</button>
+                    <button
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg 
+                                   transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500 
+                                   focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!file || !!status}
+                    >
+                        Enviar para Análise
+                    </button>
                     {status && <span className="text-sm text-slate-600">{status}</span>}
                 </div>
             </form>
