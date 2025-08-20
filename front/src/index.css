@@ -1,36 +1,35 @@
 /* src/index.css */
 
-/* Estas três linhas são CRUCIAIS para que o Tailwind funcione */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Estas três linhas seriam CRUCIAIS para que o Tailwind funcionasse localmente */
+/* @tailwind base; */
+/* @tailwind components; */
+/* @tailwind utilities; */
 
-/* ... o resto dos seus estilos CSS globais ... */
+/* Você pode adicionar seus estilos CSS globais personalizados aqui, mesmo com o CDN */
 
-/* Estilos de botão globais, usando @apply para aplicar classes Tailwind */
+/* Exemplo de estilos globais para botões */
 .btn {
-  @apply px-4 py-2 rounded-lg font-semibold transition-colors duration-200;
+  /* Estas classes seriam aplicadas via @apply no tailwind.config.js se não fosse CDN */
+  /* Mas você pode definir estilos CSS puros aqui se quiser que se apliquem globalmente */
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700 shadow-md;
+  /* ... */
 }
 
 .btn-ghost {
-  @apply bg-transparent text-blue-600 hover:bg-blue-100;
+  /* ... */
 }
 
-/* Estilo para o container de conteúdo principal */
 .container-prose {
-  @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8; /* Centraliza e adiciona padding responsivo */
+  /* ... */
 }
 
-/* Garante que o html, body e o elemento root ocupem toda a altura */
 html, body, #root {
   height: 100%;
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif; /* Use a fonte Inter ou a que preferir */
+  font-family: 'Inter', sans-serif;
 }

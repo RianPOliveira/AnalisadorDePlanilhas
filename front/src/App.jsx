@@ -2,7 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import UploadPage from "./pages/UploadPage.jsx";
 import logo from "./assets/sergipetec-logo.jpg";
- // Certifique-se de que esta importação está correta
+// A importação do index.css é comentada ou removida ao usar CDN
+// import "./index.css"; 
 
 // Função auxiliar para classes de navegação (mantida, mas não utilizada no header agora)
 function navCls() {
@@ -14,21 +15,10 @@ function AppContent() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-slate-800 font-sans antialiased">
             <header className="bg-white shadow-md py-4 px-6 md:px-12 border-b border-blue-100 rounded-b-lg">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    {/* Logotipo na parte superior esquerda */}
                     <a href="/" className="flex items-center gap-3 transition-transform duration-200 hover:scale-105">
                         <img src={logo} alt="SergipeTec" className="h-12 w-auto rounded-lg shadow-sm" />
                         <span className="font-bold text-2xl text-blue-800 tracking-tight">SergipeTec</span>
                     </a>
-
-                    {/* Barra de navegação removida, deixando apenas o logótipo */}
-                    {/* <nav className="flex items-center space-x-6">
-                        <a href="#como-funciona" className={navCls()}>Como Funciona</a>
-                        <a href="#recursos" className={navCls()}>Recursos</a>
-                        <a href="#contacto" className={navCls()}>Contacto</a>
-                        <button className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 transition-colors duration-200 shadow-md">
-                            Fazer Login
-                        </button>
-                    </nav> */}
                 </div>
             </header>
 
