@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import UploadPage from "./pages/UploadPage.jsx";
-import logo from "./assets/sergipetec-logo.jpg";
+import logo from "./assets/sergipetec-logo.png";
 // A importação do index.css é comentada ou removida ao usar CDN
 // import "./index.css"; 
 
