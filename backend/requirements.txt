@@ -12,3 +12,6 @@ websockets>=10.0  # Para comunicação WebSocket em tempo real (opcional)
 
 # Nota: uuid, datetime, enum e typing são built-in no Python 3.6+
 # Nota: sqlite3 é built-in no Python padrão
+# Dependências para o Servidor de API
+fastapi==0.116.1
+uvicorn==0.35.0
