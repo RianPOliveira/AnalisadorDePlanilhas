@@ -1,20 +1,36 @@
+/* src/index.css */
+
+/* Estas três linhas são CRUCIAIS para que o Tailwind funcione */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+/* ... o resto dos seus estilos CSS globais ... */
+
+/* Estilos de botão globais, usando @apply para aplicar classes Tailwind */
+.btn {
+  @apply px-4 py-2 rounded-lg font-semibold transition-colors duration-200;
 }
 
-.btn {
-  @apply inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold transition;
-}
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700;
+  @apply bg-blue-600 text-white hover:bg-blue-700 shadow-md;
 }
+
 .btn-ghost {
-  @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50;
+  @apply bg-transparent text-blue-600 hover:bg-blue-100;
 }
+
+/* Estilo para o container de conteúdo principal */
 .container-prose {
-  @apply max-w-6xl mx-auto px-4;
+  @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8; /* Centraliza e adiciona padding responsivo */
+}
+
+/* Garante que o html, body e o elemento root ocupem toda a altura */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif; /* Use a fonte Inter ou a que preferir */
 }
