@@ -1,31 +1,23 @@
-# servidor_api.py (Versão final, completa e corrigida)
+# servidor_api.py (Versão final com handler OPTIONS manual)
 
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Response, HTTPException # Adicionamos Response aqui
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import google.generativeai as genai
 from fastapi.middleware.cors import CORSMiddleware
 
 # --- CONFIGURAÇÃO E INICIALIZAÇÃO ---
-
-# Carrega as variáveis do arquivo .env
 load_dotenv()
-
-# Crie a sua aplicação FastAPI
 app = FastAPI()
 
-# --- BLOCO DE CONFIGURAÇÃO DO CORS (A PARTE MAIS IMPORTANTE) ---
-# Este bloco deve vir logo após a criação do app
-origins = [
-    "*"  # Permite todas as origens. Para produção, você pode restringir.
-]
-
+# --- BLOCO DE CONFIGURAÇÃO DO CORS ---
+origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"], # Garante que OPTIONS seja permitido
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 # --- FIM DO BLOCO DE CONFIGURAÇÃO DO CORS ---
@@ -56,7 +48,6 @@ except Exception as e:
     print(f"❌ Erro crítico ao inicializar o modelo de IA: {e}")
 
 
-# Modelo de dados para a requisição que vem do frontend
 class PlanilhaRequest(BaseModel):
     dados_planilha: str
     instrucao: str
@@ -67,6 +58,13 @@ class PlanilhaRequest(BaseModel):
 def rota_raiz():
     return {"mensagem": "Servidor do Agente de Análise de Planilhas está no ar!"}
 
+# --- INÍCIO DA CORREÇÃO FINAL PARA O CORS ---
+# Este endpoint manual irá capturar o pedido de permissão OPTIONS
+# e responder que está tudo OK, antes que o pedido POST real chegue.
+@app.options("/analisar_planilha")
+def cors_preflight_handler():
+    return Response(status_code=200)
+# --- FIM DA CORREÇÃO FINAL PARA O CORS ---
 
 @app.post("/analisar_planilha")
 def analisar_planilha(request: PlanilhaRequest):
@@ -87,14 +85,11 @@ def analisar_planilha(request: PlanilhaRequest):
     
     try:
         response = model.generate_content(prompt_completo)
-        # Adicionamos uma verificação extra para garantir que a resposta não está bloqueada
         if not response.parts:
-            print("❌ A resposta do modelo foi bloqueada ou veio vazia.")
-            raise ValueError("A resposta da IA foi bloqueada, possivelmente por filtros de segurança ou outros motivos.")
+            raise ValueError("A resposta da IA foi bloqueada.")
 
         print("Análise gerada com sucesso pela API do Google.")
         return {"analise_concluida": True, "relatorio": response.text}
     except Exception as e:
         print(f"❌ Erro durante a comunicação com a API do Google: {e}")
-        # Usamos HTTPException para retornar um erro de servidor adequado
         raise HTTPException(status_code=500, detail=str(e))
