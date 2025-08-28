@@ -1,11 +1,11 @@
-# servidor_api.py (Versão final com handler OPTIONS manual)
-
 import os
-from fastapi import FastAPI, Response, HTTPException # Adicionamos Response aqui
+from fastapi import FastAPI, Response, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import google.generativeai as genai
 from fastapi.middleware.cors import CORSMiddleware
+from mangaba_agent import MangabaAgent
+import uvicorn
+import json
 
 # --- CONFIGURAÇÃO E INICIALIZAÇÃO ---
 load_dotenv()
@@ -22,31 +22,21 @@ app.add_middleware(
 )
 # --- FIM DO BLOCO DE CONFIGURAÇÃO DO CORS ---
 
-
-# Inicialize o modelo de IA
-model = None
+# Inicialize os dois agentes do Mangaba-ai
 try:
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        print("❌ ERRO: GOOGLE_API_KEY não encontrada no arquivo .env")
-    else:
-        genai.configure(api_key=api_key)
-        generation_config = {"max_output_tokens": 8192, "temperature": 0.9}
-        safety_settings = [
-            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-        ]
-        model = genai.GenerativeModel(
-            os.getenv("MODEL_NAME", "gemini-1.5-flash-latest"),
-            generation_config=generation_config,
-            safety_settings=safety_settings
-        )
-        print("✅ Modelo do Google Gemini inicializado com sucesso!")
+    agente_relatorio = MangabaAgent(
+        model=os.getenv("MODEL_NAME", "gemini-1.5-flash-latest"),
+        agent_id="analista_de_planilhas",
+    )
+    agente_grafico = MangabaAgent(
+        model=os.getenv("MODEL_NAME", "gemini-1.5-flash-latest"),
+        agent_id="especialista_em_graficos",
+    )
+    print("✅ Agentes do Mangaba-ai inicializados com sucesso!")
 except Exception as e:
-    print(f"❌ Erro crítico ao inicializar o modelo de IA: {e}")
-
+    print(f"❌ Erro crítico ao inicializar os agentes de IA: {e}")
+    agente_relatorio = None
+    agente_grafico = None
 
 class PlanilhaRequest(BaseModel):
     dados_planilha: str
@@ -58,38 +48,67 @@ class PlanilhaRequest(BaseModel):
 def rota_raiz():
     return {"mensagem": "Servidor do Agente de Análise de Planilhas está no ar!"}
 
-# --- INÍCIO DA CORREÇÃO FINAL PARA O CORS ---
-# Este endpoint manual irá capturar o pedido de permissão OPTIONS
-# e responder que está tudo OK, antes que o pedido POST real chegue.
 @app.options("/analisar_planilha")
 def cors_preflight_handler():
     return Response(status_code=200)
-# --- FIM DA CORREÇÃO FINAL PARA O CORS ---
 
 @app.post("/analisar_planilha")
 def analisar_planilha(request: PlanilhaRequest):
-    if not model:
-        raise HTTPException(status_code=503, detail="Modelo de IA não inicializado.")
+    if not agente_relatorio or not agente_grafico:
+        raise HTTPException(status_code=503, detail="Agentes de IA não inicializados.")
 
     print(f"Recebida requisição com a instrução: '{request.instrucao}'")
     
-    prompt_completo = f"""
+    # --- Passo 1: Gerar o Relatório de Análise (Agente 1) ---
+    prompt_relatorio = f"""
     **Tarefa:** Você é um especialista em análise de dados e planilhas.
     **Instrução do Usuário:** {request.instrucao}
     **Dados da Planilha (em formato de texto/CSV):**
     ---
     {request.dados_planilha}
     ---
-    **Sua Resposta:** Forneça uma análise clara e objetiva.
+    **Sua Resposta:** Forneça uma análise clara e detalhada.
     """
-    
     try:
-        response = model.generate_content(prompt_completo)
-        if not response.parts:
-            raise ValueError("A resposta da IA foi bloqueada.")
-
-        print("Análise gerada com sucesso pela API do Google.")
-        return {"analise_concluida": True, "relatorio": response.text}
+        relatorio_analise = agente_relatorio.chat(prompt_relatorio)
+        print("Análise gerada com sucesso pelo agente 'analista_de_planilhas'.")
     except Exception as e:
-        print(f"❌ Erro durante a comunicação com a API do Google: {e}")
+        print(f"❌ Erro na comunicação com o agente de relatório: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+    # --- Passo 2: Gerar a Sugestão de Gráfico (Agente 2) ---
+    prompt_grafico = f"""
+    **Tarefa:** Você é um especialista em visualização de dados. Com base na análise, crie uma resposta **exclusivamente em formato JSON** que contenha a estrutura de dados necessária para gerar um gráfico.
+    **O JSON deve ter três campos principais:**
+    - `titulo`: Um título descritivo para o gráfico.
+    - `tipo_grafico`: O tipo de gráfico ideal ('bar', 'pie', 'line', etc.).
+    - `dados_grafico`: Um array de objetos com os dados do gráfico (ex: `[{"label": "Categoria A", "value": 10}, ...]`).
+    
+    **Relatório de Análise:**
+    ---
+    {relatorio_analise}
+    ---
+    **Dados da Planilha Original:**
+    ---
+    {request.dados_planilha}
+    ---
+    
+    **Sua Resposta:** Forneça apenas o objeto JSON.
+    """
+    try:
+        sugestao_grafico_json_str = agente_grafico.chat(prompt_grafico)
+        sugestao_grafico_json = json.loads(sugestao_grafico_json_str)
+        print("Sugestão de gráfico gerada com sucesso pelo agente 'especialista_em_graficos'.")
+    except Exception as e:
+        print(f"❌ Erro na comunicação com o agente de gráficos: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    return {
+        "analise_concluida": True,
+        "relatorio": relatorio_analise,
+        "sugestao_grafico": sugestao_grafico_json
+    }
+
+# --- Adicione a seguinte verificação no final do arquivo ---
+if __name__ == "__main__":
+    uvicorn.run("servidor_api:app", host="0.0.0.0", port=8000, reload=True)

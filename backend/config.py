@@ -10,7 +10,11 @@ class Config:
     def __init__(self):
         # Obrigatórios
         self.api_key = os.getenv('GOOGLE_API_KEY') or os.getenv('API_KEY')
-        self.model = os.getenv('MODEL_NAME', 'gemini-pro') or os.getenv('MODEL', 'gemini-pro')
+        
+        # CORREÇÃO AQUI
+        # Agora ele buscará o MODEL_NAME do .env primeiro
+        # Se não encontrar, ele usará 'gemini-1.5-flash' como padrão
+        self.model = os.getenv('MODEL_NAME') or os.getenv('MODEL') or 'gemini-1.5-flash'
         
         # Opcionais
         self.log_level = os.getenv('LOG_LEVEL', 'INFO')
