@@ -14,7 +14,7 @@ class Config:
         # CORREÇÃO AQUI
         # Agora ele buscará o MODEL_NAME do .env primeiro
         # Se não encontrar, ele usará 'gemini-1.5-flash' como padrão
-        self.model = os.getenv('MODEL_NAME') or os.getenv('MODEL') or 'gemini-1.5-flash'
+        self.model = os.getenv('MODEL_NAME') or os.getenv('MODEL') or 'gemini-2.5-flash'
         
         # Opcionais
         self.log_level = os.getenv('LOG_LEVEL', 'INFO')

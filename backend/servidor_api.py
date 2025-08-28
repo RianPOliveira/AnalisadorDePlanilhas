@@ -1,4 +1,5 @@
 import os
+import re
 from fastapi import FastAPI, Response, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -25,11 +26,11 @@ app.add_middleware(
 # Inicialize os dois agentes do Mangaba-ai
 try:
     agente_relatorio = MangabaAgent(
-        model=os.getenv("MODEL_NAME", "gemini-1.5-flash-latest"),
+        model=os.getenv("MODEL_NAME", "gemini-2.5-flash"),
         agent_id="analista_de_planilhas",
     )
     agente_grafico = MangabaAgent(
-        model=os.getenv("MODEL_NAME", "gemini-1.5-flash-latest"),
+        model=os.getenv("MODEL_NAME", "gemini-2.5-flash"),
         agent_id="especialista_em_graficos",
     )
     print("✅ Agentes do Mangaba-ai inicializados com sucesso!")
@@ -78,31 +79,52 @@ def analisar_planilha(request: PlanilhaRequest):
 
     # --- Passo 2: Gerar a Sugestão de Gráfico (Agente 2) ---
     prompt_grafico = f"""
-    **Tarefa:** Você é um especialista em visualização de dados. Com base na análise, crie uma resposta **exclusivamente em formato JSON** que contenha a estrutura de dados necessária para gerar um gráfico.
-    **O JSON deve ter três campos principais:**
-    - `titulo`: Um título descritivo para o gráfico.
-    - `tipo_grafico`: O tipo de gráfico ideal ('bar', 'pie', 'line', etc.).
-    - `dados_grafico`: Um array de objetos com os dados do gráfico (ex: `[{"label": "Categoria A", "value": 10}, ...]`).
+    **Tarefa:** Com base na análise, gere uma resposta **EXCLUSIVAMENTE em formato JSON**, sem NENHUM texto adicional antes ou depois.
+    **O JSON deve seguir este formato RIGOROSO:**
+    {{
+      "titulo": "Título do Gráfico",
+      "tipo_grafico": "bar",
+      "dados_grafico": [
+        {{
+          "label": "Nome da Categoria",
+          "value": 100
+        }},
+        {{
+          "label": "Outra Categoria",
+          "value": 200
+        }}
+      ]
+    }}
     
-    **Relatório de Análise:**
+    **Análise de Dados:**
     ---
     {relatorio_analise}
     ---
-    **Dados da Planilha Original:**
-    ---
-    {request.dados_planilha}
-    ---
     
-    **Sua Resposta:** Forneça apenas o objeto JSON.
+    **Instrução:** Gere o JSON do gráfico mais relevante para a análise.
     """
+    sugestao_grafico_json = {}
     try:
         sugestao_grafico_json_str = agente_grafico.chat(prompt_grafico)
-        sugestao_grafico_json = json.loads(sugestao_grafico_json_str)
-        print("Sugestão de gráfico gerada com sucesso pelo agente 'especialista_em_graficos'.")
+        
+        # Usa regex para encontrar o primeiro bloco JSON
+        match = re.search(r'```json\s*(\{.*\})\s*```', sugestao_grafico_json_str, re.DOTALL)
+        
+        if match:
+            cleaned_json_str = match.group(1)
+            sugestao_grafico_json = json.loads(cleaned_json_str)
+            print("Sugestão de gráfico gerada com sucesso pelo agente 'especialista_em_graficos'.")
+        else:
+            raise ValueError("Não foi encontrado um bloco de código JSON válido na resposta da IA.")
+
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"❌ Erro ao parsear a resposta do agente de gráficos: {e}")
+        print(f"Resposta bruta da IA: {sugestao_grafico_json_str}")
+        sugestao_grafico_json = {"error": "A IA retornou um JSON inválido."}
     except Exception as e:
         print(f"❌ Erro na comunicação com o agente de gráficos: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-        
+        sugestao_grafico_json = {"error": f"Erro na comunicação com a IA: {str(e)}"}
+
     return {
         "analise_concluida": True,
         "relatorio": relatorio_analise,
