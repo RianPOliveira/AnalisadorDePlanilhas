@@ -30,7 +30,8 @@ ChartJS.register(
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-const API = import.meta.env.VITE_API_URL;
+// Definição da constante API_URL
+const API_URL = "https://analisador-de-planilhas.vercel.app/";
 
 export default function UploadPage() {
     const [file, setFile] = useState(null);
@@ -46,7 +47,8 @@ export default function UploadPage() {
         try {
             const text = await extractTextFromFile(file);
             setStatus("Enviando para análise...");
-            const { data } = await axios.post(`${API}/analisar_planilha`, {
+            // Usando API_URL aqui
+            const { data } = await axios.post(`${API_URL}/analisar_planilha`, {
                 dados_planilha: text.slice(0, 200000),
                 instrucao: instrucao || "Analise e gere um resumo executivo com insights."
             });
@@ -112,7 +114,6 @@ export default function UploadPage() {
         };
 
         // Atualmente apenas o tipo 'bar' é suportado para simplicidade
-        // Outros tipos como 'pie', 'line' exigem configuração adicional
         if (sugestaoGrafico.tipo_grafico === 'bar') {
             return <Bar options={options} data={data} />;
         }
