@@ -31,7 +31,7 @@ ChartJS.register(
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 // Definição da constante API_URL
-const API_URL = "https://analisador-de-planilhas.vercel.app/";
+const API_URL = "https://analisador-de-planilhas.onrender.com";
 
 export default function UploadPage() {
     const [file, setFile] = useState(null);
