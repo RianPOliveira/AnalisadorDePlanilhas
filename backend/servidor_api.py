@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from mangaba_agent import MangabaAgent
-import uvicorn
 import json
 
 # --- CONFIGURAÇÃO E INICIALIZAÇÃO ---
@@ -130,7 +129,3 @@ def analisar_planilha(request: PlanilhaRequest):
         "relatorio": relatorio_analise,
         "sugestao_grafico": sugestao_grafico_json
     }
-
-# --- Adicione a seguinte verificação no final do arquivo ---
-if __name__ == "__main__":
-    uvicorn.run("servidor_api:app", host="0.0.0.0", port=8000, reload=True)

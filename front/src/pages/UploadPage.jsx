@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import * as pdfjsLib from "pdfjs-dist";
@@ -6,6 +6,7 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker.min?url";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { saveAs } from 'file-saver';
 
 // Importações do Chart.js
 import {
@@ -30,15 +31,15 @@ ChartJS.register(
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-// Definição da constante API_URL
-const API_URL = "https://analisador-de-planilhas.onrender.com";
+const API_URL = "https://analisadordeplanilhas.onrender.com";
 
 export default function UploadPage() {
     const [file, setFile] = useState(null);
     const [instrucao, setInstrucao] = useState("");
     const [status, setStatus] = useState("");
     const [relatorio, setRelatorio] = useState("");
-    const [sugestaoGrafico, setSugestaoGrafico] = useState(null); // Agora armazena um objeto JSON
+    const [sugestaoGrafico, setSugestaoGrafico] = useState(null);
+    const chartRef = useRef(null); // <-- NOVO: Referência para o gráfico
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -47,14 +48,13 @@ export default function UploadPage() {
         try {
             const text = await extractTextFromFile(file);
             setStatus("Enviando para análise...");
-            // Usando API_URL aqui
             const { data } = await axios.post(`${API_URL}/analisar_planilha`, {
                 dados_planilha: text.slice(0, 200000),
                 instrucao: instrucao || "Analise e gere um resumo executivo com insights."
             });
             setStatus("");
             setRelatorio(data?.relatorio ?? "");
-            setSugestaoGrafico(data?.sugestao_grafico ?? null); // Armazena o objeto JSON
+            setSugestaoGrafico(data?.sugestao_grafico ?? null);
         } catch (err) {
             console.error(err);
             setStatus("Erro: " + (err?.message || "falha ao analisar"));
@@ -62,6 +62,19 @@ export default function UploadPage() {
             setSugestaoGrafico(null);
         }
     }
+
+    const downloadRelatorio = () => {
+        const blob = new Blob([relatorio], { type: "text/plain;charset=utf-8" });
+        saveAs(blob, "relatorio_analise.txt");
+    };
+
+    // <-- NOVO: Função para baixar o gráfico
+    const downloadGrafico = () => {
+        if (chartRef.current) {
+            const chartImage = chartRef.current.toBase64Image();
+            saveAs(chartImage, "grafico_gerado.png");
+        }
+    };
 
     const renderers = {
         code({ node, inline, className, children, ...props }) {
@@ -83,7 +96,6 @@ export default function UploadPage() {
         }
     };
 
-    // Renderiza o gráfico se os dados existirem
     const renderChart = () => {
         if (!sugestaoGrafico || !sugestaoGrafico.dados_grafico) return null;
 
@@ -113,11 +125,10 @@ export default function UploadPage() {
             },
         };
 
-        // Atualmente apenas o tipo 'bar' é suportado para simplicidade
         if (sugestaoGrafico.tipo_grafico === 'bar') {
-            return <Bar options={options} data={data} />;
+            return <Bar ref={chartRef} options={options} data={data} />; // <-- NOVO: Adiciona a referência aqui
         }
-        
+
         return <p>Tipo de gráfico não suportado: {sugestaoGrafico.tipo_grafico}</p>;
     };
 
@@ -165,7 +176,17 @@ export default function UploadPage() {
             <div className="mt-10 space-y-8">
                 {relatorio && (
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-3">Relatório</h2>
+                        <div className="flex justify-between items-center mb-3">
+                            <h2 className="text-2xl font-bold text-slate-800">Relatório</h2>
+                            <button
+                                onClick={downloadRelatorio}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl shadow-lg
+                                             transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-green-500
+                                             focus:ring-opacity-50"
+                            >
+                                Baixar Relatório
+                            </button>
+                        </div>
                         <div className="rounded-xl border border-slate-200 p-5 bg-slate-50 prose max-w-none">
                             <ReactMarkdown components={renderers}>{relatorio}</ReactMarkdown>
                         </div>
@@ -173,7 +194,18 @@ export default function UploadPage() {
                 )}
                 {sugestaoGrafico && (
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-3">Gráfico Gerado</h2>
+                        {/* <-- NOVO: Adiciona um container flex para o título e o botão */}
+                        <div className="flex justify-between items-center mb-3">
+                            <h2 className="text-2xl font-bold text-slate-800">Gráfico Gerado</h2>
+                            <button
+                                onClick={downloadGrafico}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl shadow-lg
+                                             transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-green-500
+                                             focus:ring-opacity-50"
+                            >
+                                Baixar Gráfico
+                            </button>
+                        </div>
                         <div className="rounded-xl border border-slate-200 p-5 bg-slate-50">
                             {renderChart()}
                         </div>
