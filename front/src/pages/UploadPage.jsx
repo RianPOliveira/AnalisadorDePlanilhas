@@ -6,7 +6,7 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker.min?url";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { saveAs } from 'file-saver';
+import { saveAs } from 'file-saver'; 
 
 // Importações do Chart.js
 import {
@@ -39,7 +39,7 @@ export default function UploadPage() {
     const [status, setStatus] = useState("");
     const [relatorio, setRelatorio] = useState("");
     const [sugestaoGrafico, setSugestaoGrafico] = useState(null);
-    const chartRef = useRef(null); // <-- NOVO: Referência para o gráfico
+    const chartRef = useRef(null); 
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -68,7 +68,6 @@ export default function UploadPage() {
         saveAs(blob, "relatorio_analise.txt");
     };
 
-    // <-- NOVO: Função para baixar o gráfico
     const downloadGrafico = () => {
         if (chartRef.current) {
             const chartImage = chartRef.current.toBase64Image();
@@ -126,7 +125,7 @@ export default function UploadPage() {
         };
 
         if (sugestaoGrafico.tipo_grafico === 'bar') {
-            return <Bar ref={chartRef} options={options} data={data} />; // <-- NOVO: Adiciona a referência aqui
+            return <Bar ref={chartRef} options={options} data={data} />;
         }
 
         return <p>Tipo de gráfico não suportado: {sugestaoGrafico.tipo_grafico}</p>;
@@ -187,14 +186,13 @@ export default function UploadPage() {
                                 Baixar Relatório
                             </button>
                         </div>
-                        <div className="rounded-xl border border-slate-200 p-5 bg-slate-50 prose max-w-none">
+                        <div className="rounded-xl border border-slate-200 p-5 bg-slate-50 prose max-w-none relatorio-container">
                             <ReactMarkdown components={renderers}>{relatorio}</ReactMarkdown>
                         </div>
                     </div>
                 )}
                 {sugestaoGrafico && (
                     <div>
-                        {/* <-- NOVO: Adiciona um container flex para o título e o botão */}
                         <div className="flex justify-between items-center mb-3">
                             <h2 className="text-2xl font-bold text-slate-800">Gráfico Gerado</h2>
                             <button
